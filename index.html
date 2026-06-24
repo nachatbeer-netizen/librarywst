@@ -1,267 +1,482 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>WST Library Main Portal</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <style>
-    body { background: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .wst-header { background: #800000; color: #ffc107; padding: 25px; border-bottom: 5px solid #ffc107; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-    .menu-card { transition: transform 0.2s, box-shadow 0.2s; border: none; border-radius: 15px; cursor: pointer; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .menu-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(128,0,0,0.15); }
-    .icon-box { font-size: 3rem; color: #800000; margin-bottom: 15px; }
-    .app-section { display: none; }
-    .app-section.active { display: block; }
-    #video-box { position: relative; width: 320px; height: 240px; margin: auto; background: #000; border-radius: 12px; overflow: hidden; }
-    video { width: 320px; height: 240px; transform: scaleX(-1); }
-    canvas { position: absolute; top: 0; left: 0; }
-    .sticker-preview { width: 50mm; height: 25mm; border: 1px solid #ddd; padding: 4px; margin: auto; background: #fff; text-align: center; font-size: 9px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WST SMART LIBRARY | Executive Portal v3.0</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Noto+Sans+Thai:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+    <style>
+        :root {
+            --maroon: #800000;
+            --gold: #C5A028;
+            --dark-blue: #1e293b;
+            --soft-bg: #f1f5f9;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            background-color: var(--soft-bg);
+            margin: 0;
+            font-family: 'Poppins', 'Noto Sans Thai', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Slide Control */
+        .slide-container {
+            width: 100%;
+            max-width: 1280px;
+            min-height: 720px;
+            background: white;
+            margin: 20px auto;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+            display: none;
+            flex-direction: column;
+            padding: 50px;
+            position: relative;
+            border-top: 10px solid var(--maroon);
+        }
+        .slide-container.active { display: flex; }
+
+        /* Dashboard Stats */
+        .stat-card {
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            text-align: center;
+            border: none;
+            transition: 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+        .bg-daily { background: linear-gradient(135deg, #6366f1, #a855f7); }
+        .bg-monthly { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .bg-yearly { background: linear-gradient(135deg, #10b981, #059669); }
+
+        /* Menu Grid */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .menu-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 30px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .menu-card:hover { border-color: var(--maroon); box-shadow: 0 10px 20px rgba(128,0,0,0.1); }
+        .menu-card i { font-size: 35px; color: var(--maroon); margin-bottom: 15px; }
+        .menu-card h6 { font-weight: 700; color: var(--dark-blue); margin: 0; }
+
+        /* Book Graphics */
+        .book-cover-large {
+            width: 140px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            background: #eee;
+        }
+        .book-thumb {
+            width: 45px;
+            height: 65px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* Camera Box */
+        .camera-wrapper {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            border: 4px solid var(--gold);
+            margin: 0 auto;
+        }
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+        /* Premium Buttons */
+        .btn-wst {
+            background: var(--maroon);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .btn-wst:hover { background: #5a0000; box-shadow: 0 5px 15px rgba(0,0,0,0.2); color: white; }
+
+        /* Global Loader */
+        #global-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9); z-index: 9999;
+            display: none; justify-content: center; align-items: center;
+            flex-direction: column; color: var(--maroon);
+        }
+    </style>
 </head>
 <body>
 
-<div class="wst-header text-center mb-4 no-print">
-  <h1 class="fw-bold">WST LIBRARY ADMINISTRATIVE SYSTEM</h1>
-  <p class="mb-2">ระบบจัดการห้องสมุดอัจฉริยะ โรงเรียนวัดสุทัศน์</p>
-  <div class="container" style="max-width: 500px;">
-    <input type="text" id="gas-url" value="https://script.google.com/macros/s/AKfycbzdvlIweImXs09kqQi8XkuCPf_1JAopRIlmS0gE8IG08-zLmlSGUGh2DZVCK4jc8is5/exec" class="form-control form-control-sm text-center" placeholder="เชื่อมต่อระบบเรียบร้อย">
-  </div>
+<div id="global-loader">
+    <div class="spinner-border text-danger mb-3" style="width: 3rem; height: 3rem;"></div>
+    <h5 class="fw-bold">WST ENGINE PROCESSING...</h5>
 </div>
 
-<div class="container mb-5 no-print">
-  
-  <div id="sec-home" class="app-section active">
-    <div class="row g-4 justify-content-center text-center">
-      <div class="col-md-5 col-lg-3">
-        <div class="card menu-card p-4 h-100" onclick="switchSection('sec-borrow')">
-          <div class="icon-box">🔄</div>
-          <h5 class="fw-bold">สแกนใบหน้า ยืม-คืน</h5>
-          <p class="text-muted small">บันทึกสแกน Face ID และยิงบาร์โค้ดหนังสือเข้าคลัง</p>
-        </div>
-      </div>
-      <div class="col-md-5 col-lg-3">
-        <div class="card menu-card p-4 h-100" onclick="switchSection('sec-manage')">
-          <div class="icon-box">⚙️</div>
-          <h5 class="fw-bold">เพิ่ม & จำหน่ายออก</h5>
-          <p class="text-muted small">ลงทะเบียนหนังสือใหม่รายเล่ม หรือตัดจำหน่ายพัสดุออก</p>
-        </div>
-      </div>
-      <div class="col-md-5 col-lg-3">
-        <div class="card menu-card p-4 h-100" onclick="switchSection('sec-fines')">
-          <div class="icon-box">💰</div>
-          <h5 class="fw-bold">ค่าปรับ & ค้างส่ง</h5>
-          <p class="text-muted small">ตรวจสอบรายชื่อนักเรียนที่ค้างส่งและคำนวณค่าธรรมเนียม</p>
-        </div>
-      </div>
+<div class="slide-container active" id="home">
+    <div class="text-center mb-5">
+        <img src="https://via.placeholder.com/80?text=WST" class="mb-3" alt="Logo">
+        <h1 style="color: var(--maroon); font-weight: 800; letter-spacing: -1px;">WST LIBRARY COMMAND CENTER</h1>
+        <p class="text-muted">ระบบบริหารจัดการและสรุปสถิติอัจฉริยะ โรงเรียนวัดสุทัศน์</p>
     </div>
-  </div>
 
-  <div id="sec-borrow" class="app-section">
-    <button class="btn btn-outline-secondary mb-3" onclick="switchSection('sec-home')">⬅️ กลับหน้าหลัก</button>
-    <div class="row bg-white p-4 rounded shadow-sm">
-      <div class="col-md-5 text-center border-end">
-        <h5 class="text-danger fw-bold mb-3">[1] ค้นหาด้วยสแกนใบหน้า (GitHub Engine)</h5>
-        <div id="video-box">
-          <video id="video" autoplay muted playsinline></video>
-          <canvas id="overlay"></canvas>
-        </div>
-        <button class="btn btn-primary btn-sm mt-2" onclick="startCamera()">🔌 เปิดใช้งานกล้อง</button>
-        <input type="text" id="std-id" class="form-control mt-3 text-center fw-bold" placeholder="รหัสนักเรียน">
-        <div id="std-name" class="mt-2 text-success fw-bold"></div>
-      </div>
-      <div class="col-md-7 ps-4">
-        <h5 class="text-danger fw-bold mb-3">[2] สแกนบาร์โค้ดหนังสือ (ยิงผ่านเครื่องอ่าน)</h5>
-        <input type="text" id="book-barcode" class="form-control form-control-lg text-center mb-3" placeholder="คลิกที่นี่แล้วกดเครื่องยิงบาร์โค้ด..." autofocus>
-        <div class="d-grid gap-2">
-          <button class="btn btn-success btn-lg" onclick="handleTx('borrowBook')">💾 บันทึกการยืมหนังสือ</button>
-          <button class="btn btn-warning" onclick="handleTx('returnBook', false)">↩️ คืนสภาพปกติ</button>
-          <button class="btn btn-danger" onclick="handleTx('returnBook', true)">💥 คืนแบบชำรุด (คิดค่าปรับชำรุด)</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="sec-manage" class="app-section">
-    <button class="btn btn-outline-secondary mb-3" onclick="switchSection('sec-home')">⬅️ กลับหน้าหลัก</button>
     <div class="row g-4">
-      <div class="col-md-6">
-        <div class="bg-white p-4 rounded shadow-sm h-100">
-          <h5 class="fw-bold text-maroon mb-3">➕ ลงทะเบียนรับหนังสือใหม่เข้าคลัง</h5>
-          <input type="text" id="add-title" class="form-control mb-2" placeholder="ชื่อหนังสือ/ชื่อเรื่อง">
-          <input type="text" id="add-author" class="form-control mb-2" placeholder="ชื่อผู้แต่ง">
-          <input type="text" id="add-isbn" class="form-control mb-3" placeholder="รหัส ISBN (ถ้ามี)">
-          <button class="btn btn-success w-100" onclick="addBook()">บันทึกเพิ่มหนังสือ</button>
-          
-          <div id="print-zone" class="mt-4 text-center d-none">
-            <h6>🖨️ บาร์โค้ดสำหรับพิมพ์ติดปกเล่มใหม่</h6>
-            <div class="sticker-preview">
-              <div id="st-title" class="fw-bold text-truncate"></div>
-              <svg id="st-barcode"></svg>
+        <div class="col-md-4">
+            <div class="stat-card bg-daily shadow-sm">
+                <h6>ยืมวันนี้ (Daily)</h6>
+                <h2 id="stat-daily" class="fw-bold">0</h2>
+                <small>Transactions Today</small>
             </div>
-            <button class="btn btn-sm btn-dark mt-2" onclick="window.print()">สั่งพิมพ์แผ่นนี้</button>
-          </div>
         </div>
-      </div>
-      <div class="col-md-6">
-        <div class="bg-white p-4 rounded shadow-sm h-100">
-          <h5 class="fw-bold text-danger mb-3">🗑️ ตัดคัดจำหน่ายพัสดุออก (Disposal)</h5>
-          <input type="text" id="disp-barcode" class="form-control mb-2" placeholder="ยิงบาร์โค้ดหนังสือเล่มย่อยที่จะคัดออก">
-          <select id="disp-reason" class="form-select mb-3">
-            <option value="ชำรุดเกินเยียวยา">ชำรุดเสียหายจนซ่อมแซมไม่ได้</option>
-            <option value="เนื้อหาสูญหาย/เก่าเกินไป">เนื้อหาล้าสมัย/ขาดหาย</option>
-            <option value="สูญหาย">สูญหาย/หาสาเหตุไม่ได้</option>
-          </select>
-          <button class="btn btn-danger w-100" onclick="disposeBook()">ยืนยันตัดยอดจำหน่ายออก</button>
+        <div class="col-md-4">
+            <div class="stat-card bg-monthly shadow-sm">
+                <h6>ยืมเดือนนี้ (Monthly)</h6>
+                <h2 id="stat-monthly" class="fw-bold">0</h2>
+                <small>Current Month</small>
+            </div>
         </div>
-      </div>
+        <div class="col-md-4">
+            <div class="stat-card bg-yearly shadow-sm">
+                <h6>ยืมปีนี้ (Yearly)</h6>
+                <h2 id="stat-yearly" class="fw-bold">0</h2>
+                <small>Academic Year 2026</small>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div id="sec-fines" class="app-section">
-    <button class="btn btn-outline-secondary mb-3" onclick="switchSection('sec-home')">⬅️ กลับหน้าหลัก</button>
-    <div class="bg-white p-4 rounded shadow-sm">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold text-danger mb-0">📋 รายการหนังสือเกินกำหนดส่ง & ค่าธรรมเนียมปรับค้าง</h5>
-        <button class="btn btn-sm btn-primary" onclick="loadFinesReport()">🔄 อัปเดตดึงรายงานล่าสุด</button>
-      </div>
-      <table class="table table-bordered table-striped align-middle">
-        <thead class="table-dark">
-          <tr>
-            <th>รหัสนักเรียน</th>
-            <th>รหัสบาร์โค้ดเล่ม</th>
-            <th>จำนวนวันเกินกำหนด</th>
-            <th>ค่าปรับสะสม (วันละ 5 บาท)</th>
-          </tr>
-        </thead>
-        <tbody id="fines-table-body">
-          <tr><td colspan="4" class="text-center text-muted">กดปุ่มอัปเดตดึงรายงานเพื่อตรวจสอบข้อมูลล่าสุด</td></tr>
-        </tbody>
-      </table>
+    <div class="menu-grid">
+        <div class="menu-card" onclick="openSection('face-scan')">
+            <i class="fas fa-face-viewfinder"></i>
+            <h6>FACE ID LOGIN</h6>
+        </div>
+        <div class="menu-card" onclick="openSection('transactions')">
+            <i class="fas fa-exchange-alt"></i>
+            <h6>BORROW & RETURN</h6>
+        </div>
+        <div class="menu-card" onclick="openSection('history')">
+            <i class="fas fa-user-clock"></i>
+            <h6>MEMBER HISTORY</h6>
+        </div>
+        <div class="menu-card" onclick="openSection('search')">
+            <i class="fas fa-search"></i>
+            <h6>CATALOGUE</h6>
+        </div>
     </div>
-  </div>
+</div>
 
+<div class="slide-container" id="face-scan">
+    <h3 class="fw-bold mb-4 border-left ps-3" style="border-left: 5px solid var(--gold);">Identity Verification</h3>
+    <div class="row align-items-center">
+        <div class="col-md-6 text-center">
+            <div class="camera-wrapper">
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="overlay"></canvas>
+            </div>
+            <div id="ai-status" class="mt-3 fw-bold text-danger">AI ENGINE IDLE</div>
+            <button class="btn btn-dark btn-sm mt-2" onclick="initFaceEngine()">ปลดล็อกกล้องสแกน</button>
+        </div>
+        <div class="col-md-6 bg-light p-5 rounded-4 border">
+            <h4 class="mb-4 text-maroon fw-bold">Identity Found</h4>
+            <div class="mb-3">
+                <label class="small text-muted fw-bold">STUDENT ID</label>
+                <input type="text" id="face-res-id" class="form-control form-control-lg fw-bold" readonly placeholder="...">
+            </div>
+            <div class="mb-4">
+                <label class="small text-muted fw-bold">FULL NAME</label>
+                <input type="text" id="face-res-name" class="form-control form-control-lg fw-bold text-success" readonly placeholder="Awaiting recognition...">
+            </div>
+            <button class="btn-wst w-100 py-3 mb-2" id="btn-face-confirm" disabled onclick="confirmLogin()">ยืนยันตัวตนและทำรายการ</button>
+            <button class="btn btn-outline-secondary w-100" onclick="openSection('home')">กลับหน้าหลัก</button>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="transactions">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold m-0">Loan Processing Hub</h3>
+        <div class="badge bg-warning text-dark p-2" id="active-user-badge">USER: GUEST</div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card p-4 border-0 shadow-sm text-center bg-light">
+                <img id="book-cover-preview" src="https://via.placeholder.com/150?text=Scan+Book" class="book-cover-large mx-auto mb-3">
+                <h6 id="book-title-preview" class="fw-bold text-maroon mb-1">รอยิงบาร์โค้ด...</h6>
+                <p id="book-author-preview" class="small text-muted">Book details will appear here</p>
+            </div>
+        </div>
+        <div class="col-md-8 px-4">
+            <div class="mb-4">
+                <label class="fw-bold mb-2">Book Barcode (ยิงบาร์โค้ดหนังสือ)</label>
+                <input type="text" id="barcode-input" class="form-control form-control-lg text-center fw-bold" placeholder="Click here and scan..." autofocus onkeypress="if(event.key==='Enter') doBorrow()">
+            </div>
+            <div class="row g-2">
+                <div class="col-md-8">
+                    <button class="btn btn-success w-100 py-3 fw-bold" onclick="doBorrow()"><i class="fas fa-save me-2"></i> บันทึกการยืม (BORROW)</button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-warning w-100 py-3 fw-bold" onclick="doReturn(false)">คืนปกติ</button>
+                </div>
+                <div class="col-12 mt-2">
+                    <button class="btn btn-outline-danger w-100" onclick="doReturn(true)">ส่งคืนกรณีพัสดุชำรุดเสียหาย</button>
+                </div>
+            </div>
+            
+            <table class="table mt-4 table-sm">
+                <thead class="table-dark small">
+                    <tr><th>Time</th><th>Barcode</th><th>Status</th></tr>
+                </thead>
+                <tbody id="session-log" class="small"></tbody>
+            </table>
+        </div>
+    </div>
+    <button class="btn btn-secondary mt-auto w-25" onclick="openSection('home')">Back to Menu</button>
+</div>
+
+<div class="slide-container" id="history">
+    <h3 class="fw-bold mb-4">Member Transaction History</h3>
+    <div class="input-group mb-4" style="max-width: 600px;">
+        <input type="text" id="hist-id-input" class="form-control" placeholder="ใส่รหัสนักเรียนหรือชื่อเพื่อค้นหาประวัติ...">
+        <button class="btn btn-primary px-4" onclick="loadUserHistory()">ดึงข้อมูลประวัติ</button>
+    </div>
+    
+    <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+        <table class="table table-hover align-middle">
+            <thead class="table-light sticky-top">
+                <tr class="small text-muted">
+                    <th>วัน-เวลาที่ยืม</th>
+                    <th>หน้าปก</th>
+                    <th>ชื่อหนังสือ</th>
+                    <th>รหัสพัสดุ</th>
+                    <th>สถานะปัจจุบัน</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="5" class="text-center py-5 text-muted">ใส่รหัสนักเรียนเพื่อดูประวัติการยืมรายบุคคล</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <button class="btn btn-secondary mt-auto w-25" onclick="openSection('home')">Back to Menu</button>
+</div>
+
+<div class="slide-container" id="search">
+    <h3 class="fw-bold mb-4">Library Asset Catalogue</h3>
+    <div class="input-group mb-4 shadow-sm">
+        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+        <input type="text" id="q-input" class="form-control border-start-0" placeholder="ค้นหาด้วยชื่อเรื่อง, ชื่อผู้แต่ง หรือรหัสบาร์โค้ด..." onkeyup="if(event.key==='Enter') executeSearch()">
+        <button class="btn btn-dark px-5" onclick="executeSearch()">SEARCH</button>
+    </div>
+    
+    <div id="search-grid" class="row g-3 overflow-auto" style="max-height: 450px; padding: 10px;">
+        </div>
+    <button class="btn btn-secondary mt-auto w-25" onclick="openSection('home')">Back to Menu</button>
 </div>
 
 <script>
-  const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
-  let faceDB = [];
-
-  function switchSection(secId) {
-    document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
-    document.getElementById(secId).className = "app-section active";
-    if(secId === 'sec-borrow') { document.getElementById('book-barcode').focus(); }
-  }
-
-  async function loadModels() {
-    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-    fetchData('getStudentFaceDatabase', {}, data => { faceDB = data; });
-  }
-
-  async function startCamera() {
-    const video = document.getElementById('video');
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
-      video.srcObject = stream;
-      runFaceRecognition();
-    } catch (e) { alert("บราวเซอร์ล็อกกล้องอยู่ กรุณากดอนุญาตสิทธิ์การเข้าถึงกล้องถ่ายภาพ"); }
-  }
-
-  async function runFaceRecognition() {
-    const video = document.getElementById('video');
-    const overlay = document.getElementById('overlay');
-    faceapi.matchDimensions(overlay, { width: 320, height: 240 });
-
-    setInterval(async () => {
-      const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
-      overlay.getContext('2d').clearRect(0, 0, 320, 240);
-      if(detections.length > 0) {
-        let bestMatch = { id: "", name: "", dist: 0.5 };
-        const currentDesc = detections[0].descriptor;
-        
-        faceDB.forEach(std => {
-          const dist = faceapi.euclideanDistance(currentDesc, std.descriptor);
-          if (dist < bestMatch.dist) bestMatch = { id: std.id, name: std.name, dist: dist };
-        });
-
-        if(bestMatch.id) {
-          document.getElementById('std-id').value = bestMatch.id;
-          document.getElementById('std-name').innerText = "👤 ยืนยันตัวตน: " + bestMatch.name;
-        }
-      }
-    }, 1000);
-  }
-
-  function fetchData(action, payload, callback) {
-    const url = document.getElementById('gas-url').value;
-    if(!url) return alert("กรุณาใส่ลิงก์ Web App URL (Google Apps Script) ที่แถบด้านบนสุดก่อนครับ");
-    payload.action = action;
-    fetch(url, { method: 'POST', body: JSON.stringify(payload) })
-      .then(res => res.json())
-      .then(data => callback(data))
-      .catch(e => alert("เกิดข้อผิดพลาดในการรับส่งข้อมูล: " + e.toString()));
-  }
-
-  function handleTx(action, extraParam) {
-    const sid = document.getElementById('std-id').value;
-    const bid = document.getElementById('book-barcode').value;
-    if(!bid) return alert("กรุณาระบุหรือสแกนบาร์โค้ดหนังสือ");
+    // --- Config & State ---
+    const API_URL = "https://script.google.com/macros/s/AKfycbzdvlIweImXs09kqQi8XkuCPf_1JAopRIlmS0gE8IG08-zLmlSGUGh2DZVCK4jc8is5/exec";
+    const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/";
     
-    let payload = { studentId: sid, barcode: bid };
-    if(action === 'returnBook') payload.isDamaged = extraParam;
+    let faceDB = [];
+    let currentSessionUser = { id: "", name: "GUEST" };
 
-    fetchData(action, payload, res => {
-      alert(res.msg);
-      document.getElementById('book-barcode').value = "";
-      document.getElementById('book-barcode').focus();
-    });
-  }
+    // --- Navigation ---
+    function openSection(id) {
+        document.querySelectorAll('.slide-container').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'home') loadStats();
+        if(id === 'transactions') document.getElementById('barcode-input').focus();
+    }
 
-  function addBook() {
-    const t = document.getElementById('add-title').value;
-    const a = document.getElementById('add-author').value;
-    const i = document.getElementById('add-isbn').value;
-    if(!t) return alert("โปรดระบุชื่อเรื่องหนังสือ");
+    // --- API Service ---
+    async function callBackend(action, payload = {}) {
+        document.getElementById('global-loader').style.display = 'flex';
+        payload.action = action;
+        try {
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const data = await res.json();
+            document.getElementById('global-loader').style.display = 'none';
+            return data;
+        } catch (e) {
+            document.getElementById('global-loader').style.display = 'none';
+            alert("Error connecting to WST Server");
+        }
+    }
 
-    fetchData('addNewBook', { title: t, author: a, isbn: i }, res => {
-      if(res.barcode) {
-        alert("ลงทะเบียนรับเข้าสำเร็จ!");
-        document.getElementById('print-zone').classList.remove('d-none');
-        document.getElementById('st-title').innerText = res.title;
-        JsBarcode("#st-barcode", res.barcode, { format: "CODE128", width: 1.5, height: 35, displayValue: true, fontSize: 11 });
-      }
-    });
-  }
+    // --- Stats Logic ---
+    async function loadStats() {
+        const data = await callBackend('getDashboardStats');
+        if(data) {
+            document.getElementById('stat-daily').innerText = data.daily || 0;
+            document.getElementById('stat-monthly').innerText = data.monthly || 0;
+            document.getElementById('stat-yearly').innerText = data.yearly || 0;
+        }
+    }
 
-  function disposeBook() {
-    const b = document.getElementById('disp-barcode').value;
-    const r = document.getElementById('disp-reason').value;
-    if(!b) return alert("กรุณายิงบาร์โค้ดหนังสือเล่มที่ต้องการตัดยอดจำหน่าย");
+    // --- Face Recognition Engine ---
+    async function initFaceEngine() {
+        document.getElementById('ai-status').innerText = "LOADING MODELS...";
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+        
+        document.getElementById('ai-status').innerText = "SYNCING MEMBER DB...";
+        faceDB = await callBackend('getStudentFaceDatabase');
+        
+        startCamera();
+    }
 
-    fetchData('disposeBook', { barcode: b, reason: r }, res => {
-      alert(res.msg);
-      document.getElementById('disp-barcode').value = "";
-    });
-  }
+    async function startCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+            document.getElementById('video').srcObject = stream;
+            document.getElementById('ai-status').innerText = "AI ENGINE ACTIVE";
+            runDetection();
+        } catch (e) { document.getElementById('ai-status').innerText = "CAMERA ERROR"; }
+    }
 
-  function loadFinesReport() {
-    fetchData('getOverdueReport', {}, data => {
-      let html = "";
-      if(data.length === 0) {
-        html = "<tr><td colspan='4' class='text-center text-success fw-bold'>🎉 ปัจจุบันไม่มีหนังสือค้างส่งเกินกำหนด</td></tr>";
-      } else {
-        data.forEach(r => {
-          html += `<tr><td>${r.studentId}</td><td><code>${r.barcode}</code></td><td class='text-center text-danger fw-bold'>${r.overdueDays} วัน</td><td class='text-end fw-bold text-maroon'>${r.fine} บาท</td></tr>`;
-        });
-      }
-      document.getElementById('fines-table-body').innerHTML = html;
-    });
-  }
+    async function runDetection() {
+        const video = document.getElementById('video');
+        const overlay = document.getElementById('overlay');
+        faceapi.matchDimensions(overlay, { width: 400, height: 300 });
 
-  loadModels();
+        setInterval(async () => {
+            if(!document.getElementById('face-scan').classList.contains('active')) return;
+            const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
+            overlay.getContext('2d').clearRect(0, 0, 400, 300);
+            
+            if (detections.length > 0) {
+                const currentDesc = detections[0].descriptor;
+                let bestMatch = { id: "", name: "", dist: 0.55 };
+
+                faceDB.forEach(std => {
+                    const dist = faceapi.euclideanDistance(currentDesc, std.descriptor);
+                    if (dist < bestMatch.dist) bestMatch = { id: std.id, name: std.name, dist: dist };
+                });
+
+                if (bestMatch.id) {
+                    document.getElementById('face-res-id').value = bestMatch.id;
+                    document.getElementById('face-res-name').value = bestMatch.name;
+                    document.getElementById('btn-face-confirm').disabled = false;
+                    currentSessionUser = { id: bestMatch.id, name: bestMatch.name };
+                }
+            }
+        }, 1000);
+    }
+
+    function confirmLogin() {
+        document.getElementById('active-user-badge').innerText = "USER: " + currentSessionUser.name;
+        openSection('transactions');
+    }
+
+    // --- Transaction Logic ---
+    async function doBorrow() {
+        const barcode = document.getElementById('barcode-input').value;
+        if(!barcode) return;
+
+        const res = await callBackend('borrowBook', { studentId: currentSessionUser.id, barcode: barcode });
+        if(res.success) {
+            document.getElementById('book-cover-preview').src = res.book.cover || "https://via.placeholder.com/150";
+            document.getElementById('book-title-preview').innerText = res.book.title;
+            document.getElementById('book-author-preview').innerText = "ยืมสำเร็จโดย: " + currentSessionUser.name;
+            addSessionLog(barcode, "ยืมสำเร็จ");
+        } else {
+            alert(res.msg);
+        }
+        document.getElementById('barcode-input').value = "";
+        document.getElementById('barcode-input').focus();
+    }
+
+    async function doReturn(isDamaged) {
+        const barcode = document.getElementById('barcode-input').value;
+        if(!barcode) return alert("กรุณายิงบาร์โค้ดหนังสือที่ต้องการคืน");
+
+        const res = await callBackend('returnBook', { barcode: barcode, isDamaged: isDamaged });
+        alert(res.msg);
+        addSessionLog(barcode, isDamaged ? "คืน (ชำรุด)" : "คืนสำเร็จ");
+        document.getElementById('barcode-input').value = "";
+    }
+
+    function addSessionLog(bc, status) {
+        const row = `<tr><td>${new Date().toLocaleTimeString()}</td><td>${bc}</td><td><span class="badge bg-success">${status}</span></td></tr>`;
+        document.getElementById('session-log').innerHTML = row + document.getElementById('session-log').innerHTML;
+    }
+
+    // --- History Logic ---
+    async function loadUserHistory() {
+        const id = document.getElementById('hist-id-input').value;
+        const data = await callBackend('getUserHistory', { studentId: id });
+        const body = document.getElementById('history-body');
+        
+        if(data && data.length > 0) {
+            body.innerHTML = data.map(h => `
+                <tr>
+                    <td>${h.time}</td>
+                    <td><img src="${h.cover}" class="book-thumb" onerror="this.src='https://via.placeholder.com/50'"></td>
+                    <td class="fw-bold">${h.title}</td>
+                    <td><code>${h.barcode}</code></td>
+                    <td><span class="badge ${h.status==='กำลังยืม'?'bg-danger':'bg-success'}">${h.status}</span></td>
+                </tr>
+            `).join('');
+        } else {
+            body.innerHTML = '<tr><td colspan="5" class="text-center py-5">ไม่พบประวัติการทำรายการ</td></tr>';
+        }
+    }
+
+    // --- Catalogue Logic ---
+    async function executeSearch() {
+        const q = document.getElementById('q-input').value;
+        const data = await callBackend('searchBooks', { query: q });
+        const grid = document.getElementById('search-grid');
+        
+        if(data && data.length > 0) {
+            grid.innerHTML = data.map(b => `
+                <div class="col-md-6">
+                    <div class="card p-3 border-0 shadow-sm d-flex flex-row gap-3 align-items-center">
+                        <img src="${b.cover}" class="book-thumb" style="width:60px; height:85px;" onerror="this.src='https://via.placeholder.com/60x85'">
+                        <div>
+                            <h6 class="mb-1 fw-bold">${b.title}</h6>
+                            <p class="small text-muted mb-1">โดย: ${b.author}</p>
+                            <span class="badge bg-dark small">${b.barcodes[0]}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            grid.innerHTML = '<div class="col-12 text-center text-muted">ไม่พบหนังสือที่ค้นหา</div>';
+        }
+    }
+
+    // Init Home Stats
+    loadStats();
 </script>
+
 </body>
 </html>
