@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>WST Library Main Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <style>
+    body { background: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .wst-header { background: #800000; color: #ffc107; padding: 25px; border-bottom: 5px solid #ffc107; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    .menu-card { transition: transform 0.2s, box-shadow 0.2s; border: none; border-radius: 15px; cursor: pointer; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .menu-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(128,0,0,0.15); }
+    .icon-box { font-size: 3rem; color: #800000; margin-bottom: 15px; }
+    .app-section { display: none; }
+    .app-section.active { display: block; }
+    #video-box { position: relative; width: 320px; height: 240px; margin: auto; background: #000; border-radius: 12px; overflow: hidden; }
+    video { width: 320px; height: 240px; transform: scaleX(-1); }
+    canvas { position: absolute; top: 0; left: 0; }
+    .sticker-preview { width: 50mm; height: 25mm; border: 1px solid #ddd; padding: 4px; margin: auto; background: #fff; text-align: center; font-size: 9px; }
+  </style>
+</head>
+<body>
+
+<div class="wst-header text-center mb-4 no-print">
+  <h1 class="fw-bold">WST LIBRARY ADMINISTRATIVE SYSTEM</h1>
+  <p class="mb-2">ระบบจัดการห้องสมุดอัจฉริยะ โรงเรียนวัดสุทัศน์</p>
+  <div class="container" style="max-width: 500px;">
+    <input type="text" id="gas-url" class="form-control form-control-sm text-center" placeholder="วางลิงก์ Web App URL (GAS) ของคุณครูที่นี่เพื่อเชื่อมโยงระบบ">
+  </div>
+</div>
+
+<div class="container mb-5 no-print">
+  
+  <div id="sec-home" class="app-section active">
+    <div class="row g-4 justify-content-center text-center">
+      <div class="col-md-5 col-lg-3">
+        <div class="card menu-card p-4 h-100" onclick="switchSection('sec-borrow')">
+          <div class="icon-box">🔄</div>
+          <h5 class="fw-bold">สแกนใบหน้า ยืม-คืน</h5>
+          <p class="text-muted small">บันทึกสแกน Face ID และยิงบาร์โค้ดหนังสือเข้าคลัง</p>
+        </div>
+      </div>
+      <div class="col-md-5 col-lg-3">
+        <div class="card menu-card p-4 h-100" onclick="switchSection('sec-manage')">
+          <div class="icon-box">⚙️</div>
+          <h5 class="fw-bold">เพิ่ม & จำหน่ายออก</h5>
+          <p class="text-muted small">ลงทะเบียนหนังสือใหม่รายเล่ม หรือตัดจำหน่ายพัสดุออก</p>
+        </div>
+      </div>
+      <div class="col-md-5 col-lg-3">
+        <div class="card menu-card p-4 h-100" onclick="switchSection('sec-fines')">
+          <div class="icon-box">💰</div>
+          <h5 class="fw-bold">ค่าปรับ & ค้างส่ง</h5>
+          <p class="text-muted small">ตรวจสอบรายชื่อนักเรียนที่ค้างส่งและคำนวณค่าธรรมเนียม</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec-borrow" class="app-section">
+    <button class="btn btn-outline-secondary mb-3" onclick="switchSection('sec-home')">⬅️ กลับหน้าหลัก</button>
+    <div class="row bg-white p-4 rounded shadow-sm">
+      <div class="col-md-5 text-center border-end">
+        <h5 class="text-danger fw-bold mb-3">[1] ค้นหาด้วยสแกนใบหน้า (GitHub Engine)</h5>
+        <div id="video-box">
+          <video id="video" autoplay muted playsinline></video>
+          <canvas id="overlay"></canvas>
+        </div>
+        <button class="btn btn-primary btn-sm mt-2" onclick="startCamera()">🔌 เปิดใช้งานกล้อง</button>
+        <input type="text" id="std-id" class="form-control mt-3 text-center fw-bold" placeholder="รหัสนักเรียน">
+        <div id="std-name" class="mt-2 text-success fw-bold"></div>
+      </div>
+      <div class="col-md-7 ps-4">
+        <h5 class="text-danger fw-bold mb-3">[2] สแกนบาร์โค้ดหนังสือ (ยิงผ่านเครื่องอ่าน)</h5>
+        <input type="text" id="book-barcode" class="form-control form-control-lg text-center mb-3" placeholder="คลิกที่นี่แล้วกดเครื่องยิงบาร์โค้ด..." autofocus>
+        <div class="d-grid gap-2">
+          <button class="btn btn-success btn-lg" onclick="handleTx('borrowBook')">💾 บันทึกการยืมหนังสือ</button>
+          <button class="btn btn-warning" onclick="handleTx('returnBook', false)">↩️ คืนสภาพปกติ</button>
+          <button class="btn btn-danger" onclick="handleTx('returnBook', true)">💥 คืนแบบชำรุด (คิดค่าปรับชำรุด)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec-manage" class="app-section">
+    <button class="btn btn-outline-secondary mb-3" onclick="switchSection('sec-home')">⬅️ กลับหน้าหลัก</button>
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="bg-white p-4 rounded shadow-sm h-100">
+          <h5 class="fw-bold text-maroon mb-3">➕ ลงทะเบียนรับหนังสือใหม่เข้าคลัง</h5>
+          <input type="text" id="add-title" class="form-control mb-2" placeholder="ชื่อหนังสือ/ชื่อเรื่อง">
+          <input type="text" id="add-author" class="form-control mb-2" placeholder="ชื่อผู้แต่ง">
+          <input type="text" id="add-isbn" class="form-control mb-3" placeholder="รหัส ISBN (ถ้ามี)">
+          <button class="btn btn-success w-100" onclick="addBook()">บันทึกเพิ่มหนังสือ</button>
+          
+          <div id="print-zone" class="mt-4 text-center d-none">
+            <h6>🖨️ บาร์โค้ดสำหรับพิมพ์ติดปกเล่มใหม่</h6>
+            <div class="sticker-preview">
+              <div id="st-title" class="fw-bold text-truncate"></div>
+              <svg id="st-barcode"></svg>
+            </div>
+            <button class="btn btn-sm btn-dark mt-2" onclick="window.print()">สั่งพิมพ์แผ่นนี้</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="bg-white p-4 rounded shadow-sm h-100">
+          <h5 class="fw-bold text-danger mb-3">🗑️ ตัดคัดจำหน่ายพัสดุออก (Disposal)</h5>
+          <input type="text" id="disp-barcode" class="form-control mb-2" placeholder="ยิงบาร์โค้ดหนังสือเล่มย่อยที่จะคัดออก">
+          <select id="disp-reason" class="form-select mb-3">
+            <option value="ชำรุดเกินเยียวยา">ชำรุดเสียหายจนซ่อมแซมไม่ได้</option>
+            <option value="เนื้อหาสูญหาย/เก่าเกินไป">เนื้อหาล้าสมัย/ขาดหาย</option>
+            <option value="สูญหาย">สูญหาย/หาสาเหตุไม่ได้</option>
+          </select>
+          <button class="btn btn-danger w-100" onclick="disposeBook()">ยืนยันตัดยอดจำหน่ายออก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec-fines" class="app-section">
+    <button class="btn btn-outline-secondary mb-3" onclick="switchSection('sec-home')">⬅️ กลับหน้าหลัก</button>
+    <div class="bg-white p-4 rounded shadow-sm">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-danger mb-0">📋 รายการหนังสือเกินกำหนดส่ง & ค่าธรรมเนียมปรับค้าง</h5>
+        <button class="btn btn-sm btn-primary" onclick="loadFinesReport()">🔄 อัปเดตดึงรายงานล่าสุด</button>
+      </div>
+      <table class="table table-bordered table-striped align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>รหัสนักเรียน</th>
+            <th>รหัสบาร์โค้ดเล่ม</th>
+            <th>จำนวนวันเกินกำหนด</th>
+            <th>ค่าปรับสะสม (วันละ 5 บาท)</th>
+          </tr>
+        </thead>
+        <tbody id="fines-table-body">
+          <tr><td colspan="4" class="text-center text-muted">กดปุ่มอัปเดตดึงรายงานเพื่อตรวจสอบข้อมูลล่าสุด</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+  let faceDB = [];
+
+  function switchSection(secId) {
+    document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+    document.getElementById(secId).className = "app-section active";
+    if(secId === 'sec-borrow') { document.getElementById('book-barcode').focus(); }
+  }
+
+  async function loadModels() {
+    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    fetchData('getStudentFaceDatabase', {}, data => { faceDB = data; });
+  }
+
+  async function startCamera() {
+    const video = document.getElementById('video');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+      video.srcObject = stream;
+      runFaceRecognition();
+    } catch (e) { alert("บราวเซอร์ล็อกกล้องอยู่ กรุณากดอนุญาตสิทธิ์การเข้าถึงกล้องถ่ายภาพ"); }
+  }
+
+  async function runFaceRecognition() {
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('overlay');
+    faceapi.matchDimensions(overlay, { width: 320, height: 240 });
+
+    setInterval(async () => {
+      const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
+      overlay.getContext('2d').clearRect(0, 0, 320, 240);
+      if(detections.length > 0) {
+        let bestMatch = { id: "", name: "", dist: 0.5 };
+        const currentDesc = detections[0].descriptor;
+        
+        faceDB.forEach(std => {
+          const dist = faceapi.euclideanDistance(currentDesc, std.descriptor);
+          if (dist < bestMatch.dist) bestMatch = { id: std.id, name: std.name, dist: dist };
+        });
+
+        if(bestMatch.id) {
+          document.getElementById('std-id').value = bestMatch.id;
+          document.getElementById('std-name').innerText = "👤 ยืนยันตัวตน: " + bestMatch.name;
+        }
+      }
+    }, 1000);
+  }
+
+  function fetchData(action, payload, callback) {
+    const url = document.getElementById('gas-url').value;
+    if(!url) return alert("กรุณาใส่ลิงก์ Web App URL (Google Apps Script) ที่แถบด้านบนสุดก่อนครับ");
+    payload.action = action;
+    fetch(url, { method: 'POST', body: JSON.stringify(payload) })
+      .then(res => res.json())
+      .then(data => callback(data))
+      .catch(e => alert("เกิดข้อผิดพลาดในการรับส่งข้อมูล: " + e.toString()));
+  }
+
+  function handleTx(action, extraParam) {
+    const sid = document.getElementById('std-id').value;
+    const bid = document.getElementById('book-barcode').value;
+    if(!bid) return alert("กรุณาระบุหรือสแกนบาร์โค้ดหนังสือ");
+    
+    let payload = { studentId: sid, barcode: bid };
+    if(action === 'returnBook') payload.isDamaged = extraParam;
+
+    fetchData(action, payload, res => {
+      alert(res.msg);
+      document.getElementById('book-barcode').value = "";
+      document.getElementById('book-barcode').focus();
+    });
+  }
+
+  function addBook() {
+    const t = document.getElementById('add-title').value;
+    const a = document.getElementById('add-author').value;
+    const i = document.getElementById('add-isbn').value;
+    if(!t) return alert("โปรดระบุชื่อเรื่องหนังสือ");
+
+    fetchData('addNewBook', { title: t, author: a, isbn: i }, res => {
+      if(res.barcode) {
+        alert("ลงทะเบียนรับเข้าสำเร็จ!");
+        document.getElementById('print-zone').classList.remove('d-none');
+        document.getElementById('st-title').innerText = res.title;
+        JsBarcode("#st-barcode", res.barcode, { format: "CODE128", width: 1.5, height: 35, displayValue: true, fontSize: 11 });
+      }
+    });
+  }
+
+  function disposeBook() {
+    const b = document.getElementById('disp-barcode').value;
+    const r = document.getElementById('disp-reason').value;
+    if(!b) return alert("กรุณายิงบาร์โค้ดหนังสือเล่มที่ต้องการตัดยอดจำหน่าย");
+
+    fetchData('disposeBook', { barcode: b, reason: r }, res => {
+      alert(res.msg);
+      document.getElementById('disp-barcode').value = "";
+    });
+  }
+
+  function loadFinesReport() {
+    fetchData('getOverdueReport', {}, data => {
+      let html = "";
+      if(data.length === 0) {
+        html = "<tr><td colspan='4' class='text-center text-success fw-bold'>🎉 ปัจจุบันไม่มีหนังสือค้างส่งเกินกำหนด</td></tr>";
+      } else {
+        data.forEach(r => {
+          html += `<tr><td>${r.studentId}</td><td><code>${r.barcode}</code></td><td class='text-center text-danger fw-bold'>${r.overdueDays} วัน</td><td class='text-end fw-bold text-maroon'>${r.fine} บาท</td></tr>`;
+        });
+      }
+      document.getElementById('fines-table-body').innerHTML = html;
+    });
+  }
+
+  loadModels();
+</script>
+</body>
+</html>
